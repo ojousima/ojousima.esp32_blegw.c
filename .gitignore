@@ -6,6 +6,7 @@
 *.lo
 *.o
 *.obj
+build
 
 # Precompiled Headers
 *.gch
@@ -30,3 +31,9 @@
 *.exe
 *.out
 *.app
+
+# Backup files
+*.old
+
+# MAC files
+.DS_Store

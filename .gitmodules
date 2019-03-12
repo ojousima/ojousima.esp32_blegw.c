@@ -1,0 +1,15 @@
+[submodule "components/esp32-wifi-manager"]
+	path = components/esp32-wifi-manager
+	url = https://github.com/ojousima/esp32-wifi-manager.git
+[submodule "components/esp32-ble2mqtt"]
+	path = components/esp32-ble2mqtt
+	url = https://github.com/ojousima/esp32-ble2mqtt.git
+[submodule "components/espmqtt"]
+	path = components/espmqtt
+	url = https://github.com/espressif/espmqtt.git
+[submodule "components/mkspiffs"]
+	path = components/mkspiffs
+	url = https://github.com/igrr/mkspiffs.git
+[submodule "components/esp-request"]
+	path = components/esp-request
+	url = https://github.com/tuanpmt/esp-request
