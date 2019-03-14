@@ -14,12 +14,12 @@
 
 /**
  * @brief get time from a pool of NTP servers
- * 
+ *
  * Time is refreshed once per 24 hours or when @ref time_sync is called.
  *
  * @param[in] param unused
  */
-void time_task(void *param);
+void time_task(void* param);
 
 /**
  * @brief trigger synchronizing time.
