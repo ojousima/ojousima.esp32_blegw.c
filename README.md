@@ -135,3 +135,4 @@ in main.c
 
 ## Licenses
  BSD-3 for the main project, submodules under folder `components` have their own licenses. 
+ Main project is based on MIT-Licensed (Ruuvi-GW)[https://gitlab.com/rhr407/ruuvi].
