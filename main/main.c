@@ -81,7 +81,8 @@ static void ble_on_broadcaster_discovered(mac_addr_t mac,
   char topic[100] = {0};
   char data[50] = {0};
   static uint8_t wifi_mac[18] = { 0 };
-  if (!wifi_mac[0])
+
+  if(!wifi_mac[0])
   {
     esp_wifi_get_mac(ESP_IF_WIFI_STA, wifi_mac);
     memcpy(wifi_mac, mactoa(wifi_mac), sizeof(wifi_mac));
@@ -89,7 +90,6 @@ static void ble_on_broadcaster_discovered(mac_addr_t mac,
 
   time_t now;
   time(&now);
-
   size_t index = 0;
   snprintf(topic, sizeof(topic), "%s/%s/%s/RSSI", wifi_mac, ops->name, mactoa(mac));
   index = snprintf(data, sizeof(data), "%ld:%d", now, rssi);
@@ -131,9 +131,10 @@ static void wifi_on_connected(void)
                NULL, NULL,
                NULL);
   time_sync();
+
   if(NULL != task_gpio_blink_led_task)
   {
-  	vTaskSuspend(task_gpio_blink_led_task);
+    vTaskSuspend(task_gpio_blink_led_task);
   }
 }
 
@@ -143,6 +144,7 @@ static void wifi_on_disconnected(void)
   mqtt_disconnect();
   /* We don't get notified when manually stopping MQTT */
   cleanup();
+
   if(NULL != task_gpio_blink_led_task)
   {
     vTaskResume(task_gpio_blink_led_task);
@@ -182,12 +184,11 @@ void app_main()
   esp_log_level_set("wifi", ESP_LOG_NONE);
   esp_log_level_set(TAG, ESP_LOG_INFO);
   ESP_LOGI(TAG, "App started");
-
   gpio_init();
   xTaskCreate(&gpio_task, "gpio_task", 3072, NULL, 3, &task_gpio_task);
   xTaskCreate(&gpio_timer_task, "gpio_timer_task", 3072, NULL, 3, &task_gpio_timer_task);
-  xTaskCreate(&gpio_blink_led_task, "gpio_blink_led_task", 3072, NULL, 3, &task_gpio_blink_led_task);
-
+  xTaskCreate(&gpio_blink_led_task, "gpio_blink_led_task", 3072, NULL, 3,
+              &task_gpio_blink_led_task);
   /* initialize flash memory */
   nvs_flash_init();
   /* Task to fetch time once per 24 hours. Waits until wifi_on_connected triggers data fetch */

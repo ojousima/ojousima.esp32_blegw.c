@@ -22,19 +22,19 @@
 #define GPIO_WIFI_RESET_BUTTON_MASK                   (1ULL<<CONFIG_WIFI_RESET_BUTTON_GPIO)
 
 /**
- * @brief sets Button as input and LED GPIO as output. 
+ * @brief sets Button as input and LED GPIO as output.
  */
 void gpio_init(void);
 
 /**
  * @brief blinks led at 300 ms. interval
  */
-void gpio_blink_led_task(void *pvParameter);
+void gpio_blink_led_task(void* pvParameter);
 
 /**
  * @Brief resets WiFi configuration
  */
-void gpio_timer_task(void *arg);
+void gpio_timer_task(void* arg);
 
 /**
  * @brief handles GPIO input from button
