@@ -122,7 +122,8 @@ in main.c
  * ~~The data shall be in format {TIMESTAMP}:{PAYLOAD}~~
  * ~~Status of dongle shall be indicated via LEDs~~
 
- Timestamp is a string representing Unix Epocj (number of milliseconds since Jan 1. 1970 00.00)
+ Timestamp is a string representing Unix Epoch (number of milliseconds since Jan 1. 1970 00.00).
+ Payload is value of field in string represenstation, such as -90 for RSSI or `03371556BF2CFFC10002040D0BB3`for Ruuvi data format 3.
 
 ## Factory reset
  * ~~The dongle must return to first boot state if user triggers factory reset via button.~~
