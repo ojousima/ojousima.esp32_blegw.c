@@ -57,12 +57,16 @@ SOFTWARE.
 #include "mqtt.h"
 #include "wifi_manager.h"
 
+#include "gpio.h"
 #include "time.h"
 
 static TaskHandle_t task_http_server = NULL;
 static TaskHandle_t task_wifi_manager = NULL;
 static TaskHandle_t task_dns_server = NULL;
 static TaskHandle_t task_time_task = NULL;
+static TaskHandle_t task_gpio_blink_led_task = NULL;
+static TaskHandle_t task_gpio_timer_task = NULL;
+static TaskHandle_t task_gpio_task = NULL;
 
 /* @brief tag used for ESP serial console messages */
 static const char TAG[] = "main";
@@ -76,18 +80,29 @@ static void ble_on_broadcaster_discovered(mac_addr_t mac,
 {
   char topic[100] = {0};
   char data[50] = {0};
+  static uint8_t wifi_mac[18] = { 0 };
+  if (!wifi_mac[0])
+  {
+    esp_wifi_get_mac(ESP_IF_WIFI_STA, wifi_mac);
+    memcpy(wifi_mac, mactoa(wifi_mac), sizeof(wifi_mac));
+  }
+
+  time_t now;
+  time(&now);
+
   size_t index = 0;
-  snprintf(topic, sizeof(topic), "%s/%s/RSSI", ops->name, mactoa(mac));
-  index = snprintf(data, sizeof(data), "%d", rssi);
+  snprintf(topic, sizeof(topic), "%s/%s/%s/RSSI", wifi_mac, ops->name, mactoa(mac));
+  index = snprintf(data, sizeof(data), "%ld:%d", now, rssi);
   mqtt_publish(topic, (uint8_t*)data, index, 0, true);  //QoS = 0, retain = true
 
   /* If device is RuuviTag */
   if(!strcmp(ops->name, "RuuviTag"))
   {
     memset(topic, 0, sizeof(topic));
-    snprintf(topic, sizeof(topic), "%s/%s/RAW", ops->name, mactoa(mac));
+    snprintf(topic, sizeof(topic), "%s/%s/%s/RAW", wifi_mac, ops->name, mactoa(mac));
     /** Print raw payload **/
     index = 0;
+    index += snprintf(data, sizeof(data), "%ld:", now);
 
     for(uint8_t i = 7; i < adv_data_len; i++)
     {
@@ -97,7 +112,7 @@ static void ble_on_broadcaster_discovered(mac_addr_t mac,
     mqtt_publish(topic, (uint8_t*)data, index, 0, true);  //QoS = 0, retain = true
   }
 
-  ESP_LOGD(TAG, "Device detected: %s:%s", topic, data);
+  ESP_LOGI(TAG, "Device detected: %s:%s", topic, data);
   ESP_LOG_BUFFER_HEX_LEVEL(TAG, adv_data, adv_data_len, ESP_LOG_DEBUG);
 }
 
@@ -116,6 +131,10 @@ static void wifi_on_connected(void)
                NULL, NULL,
                NULL);
   time_sync();
+  if(NULL != task_gpio_blink_led_task)
+  {
+  	vTaskSuspend(task_gpio_blink_led_task);
+  }
 }
 
 static void wifi_on_disconnected(void)
@@ -124,6 +143,10 @@ static void wifi_on_disconnected(void)
   mqtt_disconnect();
   /* We don't get notified when manually stopping MQTT */
   cleanup();
+  if(NULL != task_gpio_blink_led_task)
+  {
+    vTaskResume(task_gpio_blink_led_task);
+  }
 }
 
 /* MQTT callback functions */
@@ -147,7 +170,7 @@ static void monitoring_task(void* pvParameter)
 {
   for(;;)
   {
-    ESP_LOGD(TAG, "free heap: %d", esp_get_free_heap_size());
+    ESP_LOGI(TAG, "free heap: %d", esp_get_free_heap_size());
     vTaskDelay(5000 / portTICK_PERIOD_MS);
   }
 }
@@ -158,7 +181,13 @@ void app_main()
   /* disable the default wifi logging */
   esp_log_level_set("wifi", ESP_LOG_NONE);
   esp_log_level_set(TAG, ESP_LOG_INFO);
-  ESP_LOGI(TAG, "App started like for real");
+  ESP_LOGI(TAG, "App started");
+
+  gpio_init();
+  xTaskCreate(&gpio_task, "gpio_task", 3072, NULL, 3, &task_gpio_task);
+  xTaskCreate(&gpio_timer_task, "gpio_timer_task", 3072, NULL, 3, &task_gpio_timer_task);
+  xTaskCreate(&gpio_blink_led_task, "gpio_blink_led_task", 3072, NULL, 3, &task_gpio_blink_led_task);
+
   /* initialize flash memory */
   nvs_flash_init();
   /* Task to fetch time once per 24 hours. Waits until wifi_on_connected triggers data fetch */

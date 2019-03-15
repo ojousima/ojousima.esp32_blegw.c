@@ -1,0 +1,17 @@
+menu "Project Configuration"
+
+config WIFI_RESET_BUTTON_GPIO
+    int "GPIO pin for WiFi Reset Button"
+    range 0 25
+    default 0
+    help
+     GPIO pin for WiFi Reset Button    
+
+config LED_GPIO
+    int "GPIO pin for LED"
+    range 0 25
+    default 2
+    help
+    GPIO pin for LED
+
+endmenu
