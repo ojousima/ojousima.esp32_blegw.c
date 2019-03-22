@@ -79,7 +79,7 @@ static void ble_on_broadcaster_discovered(mac_addr_t mac,
     uint8_t* adv_data, size_t adv_data_len, int rssi, broadcaster_ops_t* ops)
 {
   char topic[100] = {0};
-  char data[50] = {0};
+  char data[100] = {0};
   static uint8_t wifi_mac[18] = { 0 };
 
   if(!wifi_mac[0])
