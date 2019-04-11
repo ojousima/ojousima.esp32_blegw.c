@@ -131,6 +131,7 @@ static void ble_on_broadcaster_discovered(mac_addr_t mac,
 
   ESP_LOGD(TAG, "Device detected, status %d: %s:%s", status, topic, data);
   ESP_LOG_BUFFER_HEX_LEVEL(TAG, adv_data, adv_data_len, ESP_LOG_DEBUG);
+
   // If MQTT was connected and message was sent, reset WDT
   if(0 == status)
   {
@@ -178,7 +179,7 @@ static void mqtt_on_connected(void)
 {
   ESP_LOGI(TAG, "Connected to MQTT, scanning for BLE devices");
   ble_scan_start();
-   //Subscribe this task to TWDT, then check if it is subscribed
+  //Subscribe this task to TWDT, then check if it is subscribed
   CHECK_ERROR_CODE(esp_task_wdt_add(task_monitoring_task), ESP_OK);
   CHECK_ERROR_CODE(esp_task_wdt_status(task_monitoring_task), ESP_OK);
 }
@@ -199,6 +200,7 @@ static void monitoring_task(void* pvParameter)
   {
     ESP_LOGI(TAG, "free heap: %d", esp_get_free_heap_size());
     vTaskDelay(5000 / portTICK_PERIOD_MS);
+
     if(tx_data)
     {
       CHECK_ERROR_CODE(esp_task_wdt_reset(), ESP_OK);
@@ -232,7 +234,8 @@ void app_main()
   wifi_manager_set_on_disconnected(wifi_on_disconnected);
   xTaskCreate(&wifi_manager, "wifi_manager", 4096, NULL, 4, &task_wifi_manager);
   /* your code should go here. Here we simply create a task on core 2 that monitors free heap memory */
-  xTaskCreatePinnedToCore(&monitoring_task, "monitoring_task", 2048, NULL, 1, &task_monitoring_task, 1);
+  xTaskCreatePinnedToCore(&monitoring_task, "monitoring_task", 2048, NULL, 1,
+                          &task_monitoring_task, 1);
   /* Init MQTT */
   ESP_ERROR_CHECK(mqtt_initialize());
   mqtt_set_on_connected_cb(mqtt_on_connected);
@@ -242,7 +245,6 @@ void app_main()
   ble_set_on_broadcaster_discovered_cb(ble_on_broadcaster_discovered);
   /* Init Watchdog */
   ESP_LOGI(TAG, "Initialize TWDT");
-
   //Initialize or reinitialize TWDT
   CHECK_ERROR_CODE(esp_task_wdt_init(TWDT_TIMEOUT_S, true), ESP_OK);
 }
