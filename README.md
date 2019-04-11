@@ -110,7 +110,7 @@ in main.c
  * ~~Dongle must be connectible over LAN~~
  * ~~Dongle may act as a WiFi access point for connection~~
  * ~~Dongle must provide a HTTP page which allows configuration to be set~~
- * The page shall have Ruuvi’s MQTT broker and QoS 0 as default [0.3.0]
+ * The page shall have Ruuvi’s MQTT broker and QoS 0 as default [0.5.0]
  * ~~The page must have field for WIFi configuration~~
 
 ## Operation
@@ -121,6 +121,8 @@ in main.c
  * ~~The dongle must transmit data buffer to MQTT broker with topic “{GW_MAC_ADDRESS}/RuuviTag/{TAG_MAC_ADDRESS}/{DATA}~~
  * ~~The data shall be in format {TIMESTAMP}:{PAYLOAD}~~
  * ~~Status of dongle shall be indicated via LEDs~~
+ * Dongle shall enter into client mode after MQTT connection has been established [0.4.0]
+ * Dongle shall enter into access point mode after MQTT connection has been lost [0.4.0]
 
  Timestamp is a string representing Unix Epoch (number of milliseconds since Jan 1. 1970 00.00).
  Payload is value of field in string represenstation, such as -90 for RSSI or `03371556BF2CFFC10002040D0BB3`for Ruuvi data format 3.
@@ -130,8 +132,8 @@ in main.c
 
 ## Firmware update
  * ~~The firmware must be updateable without special equipment.~~
- * Update may require wired USB connection, or it may be implemented over the internet. [0.4.0]
- * Update must be triggered only after user action requiring physical access to device, i.e. button press. [0.4.0]
+ * Update may require wired USB connection, or it may be implemented over the internet. [0.6.0]
+ * Update must be triggered only after user action requiring physical access to device, i.e. button press. [0.6.0]
 
 ## Licenses
  BSD-3 for the main project, submodules under folder `components` have their own licenses. 

@@ -158,7 +158,7 @@ static void wifi_on_connected(void)
   if(NULL != task_gpio_blink_led_task)
   {
     vTaskSuspend(task_gpio_blink_led_task);
-  }
+  }  
 }
 
 static void wifi_on_disconnected(void)
@@ -182,12 +182,14 @@ static void mqtt_on_connected(void)
   //Subscribe this task to TWDT, then check if it is subscribed
   CHECK_ERROR_CODE(esp_task_wdt_add(task_monitoring_task), ESP_OK);
   CHECK_ERROR_CODE(esp_task_wdt_status(task_monitoring_task), ESP_OK);
+  /** Stop Access point - todo */
 }
 
 static void mqtt_on_disconnected(void)
 {
   ESP_LOGI(TAG, "Disconnected from MQTT, stopping BLE");
   cleanup();
+  /** Start Access point - todo */
 }
 
 /**
