@@ -60,13 +60,29 @@ SOFTWARE.
 #include "gpio.h"
 #include "time.h"
 
-static TaskHandle_t task_http_server = NULL;
-static TaskHandle_t task_wifi_manager = NULL;
+#include "esp_task_wdt.h"
+
+/** If no new data is sent on 60 seconds, restart */
+#define TWDT_TIMEOUT_S 60
+
+#define CHECK_ERROR_CODE(returned, expected) ({                        \
+            if(returned != expected){                                  \
+                ESP_LOGE(TAG, "MAIN ERROR\n");                         \
+                abort();                                               \
+            }                                                          \
+})
+
+
+
 static TaskHandle_t task_dns_server = NULL;
-static TaskHandle_t task_time_task = NULL;
 static TaskHandle_t task_gpio_blink_led_task = NULL;
 static TaskHandle_t task_gpio_timer_task = NULL;
 static TaskHandle_t task_gpio_task = NULL;
+static TaskHandle_t task_http_server = NULL;
+static TaskHandle_t task_monitoring_task = NULL;
+static TaskHandle_t task_time_task = NULL;
+static TaskHandle_t task_wifi_manager = NULL;
+static bool tx_data = false;
 
 /* @brief tag used for ESP serial console messages */
 static const char TAG[] = "main";
@@ -93,7 +109,8 @@ static void ble_on_broadcaster_discovered(mac_addr_t mac,
   size_t index = 0;
   snprintf(topic, sizeof(topic), "%s/%s/%s/RSSI", wifi_mac, ops->name, mactoa(mac));
   index = snprintf(data, sizeof(data), "%ld:%d", now, rssi);
-  mqtt_publish(topic, (uint8_t*)data, index, 0, true);  //QoS = 0, retain = true
+  int status = 0;
+  status |= mqtt_publish(topic, (uint8_t*)data, index, 0, true);  //QoS = 0, retain = true
 
   /* If device is RuuviTag */
   if(!strcmp(ops->name, "RuuviTag"))
@@ -109,11 +126,16 @@ static void ble_on_broadcaster_discovered(mac_addr_t mac,
       index += snprintf(data + index, sizeof(data) - index, "%02X", adv_data[i]);
     }
 
-    mqtt_publish(topic, (uint8_t*)data, index, 0, true);  //QoS = 0, retain = true
+    status |= mqtt_publish(topic, (uint8_t*)data, index, 0, true);  //QoS = 0, retain = true
   }
 
-  ESP_LOGI(TAG, "Device detected: %s:%s", topic, data);
+  ESP_LOGD(TAG, "Device detected, status %d: %s:%s", status, topic, data);
   ESP_LOG_BUFFER_HEX_LEVEL(TAG, adv_data, adv_data_len, ESP_LOG_DEBUG);
+  // If MQTT was connected and message was sent, reset WDT
+  if(0 == status)
+  {
+    tx_data = true;
+  }
 }
 
 static void cleanup(void)
@@ -156,6 +178,9 @@ static void mqtt_on_connected(void)
 {
   ESP_LOGI(TAG, "Connected to MQTT, scanning for BLE devices");
   ble_scan_start();
+   //Subscribe this task to TWDT, then check if it is subscribed
+  CHECK_ERROR_CODE(esp_task_wdt_add(task_monitoring_task), ESP_OK);
+  CHECK_ERROR_CODE(esp_task_wdt_status(task_monitoring_task), ESP_OK);
 }
 
 static void mqtt_on_disconnected(void)
@@ -174,6 +199,11 @@ static void monitoring_task(void* pvParameter)
   {
     ESP_LOGI(TAG, "free heap: %d", esp_get_free_heap_size());
     vTaskDelay(5000 / portTICK_PERIOD_MS);
+    if(tx_data)
+    {
+      CHECK_ERROR_CODE(esp_task_wdt_reset(), ESP_OK);
+      tx_data = false;
+    }
   }
 }
 
@@ -202,7 +232,7 @@ void app_main()
   wifi_manager_set_on_disconnected(wifi_on_disconnected);
   xTaskCreate(&wifi_manager, "wifi_manager", 4096, NULL, 4, &task_wifi_manager);
   /* your code should go here. Here we simply create a task on core 2 that monitors free heap memory */
-  xTaskCreatePinnedToCore(&monitoring_task, "monitoring_task", 2048, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(&monitoring_task, "monitoring_task", 2048, NULL, 1, &task_monitoring_task, 1);
   /* Init MQTT */
   ESP_ERROR_CHECK(mqtt_initialize());
   mqtt_set_on_connected_cb(mqtt_on_connected);
@@ -210,4 +240,9 @@ void app_main()
   /* Init BLE */
   ESP_ERROR_CHECK(ble_initialize());
   ble_set_on_broadcaster_discovered_cb(ble_on_broadcaster_discovered);
+  /* Init Watchdog */
+  ESP_LOGI(TAG, "Initialize TWDT");
+
+  //Initialize or reinitialize TWDT
+  CHECK_ERROR_CODE(esp_task_wdt_init(TWDT_TIMEOUT_S, true), ESP_OK);
 }
