@@ -62,6 +62,8 @@ SOFTWARE.
 
 #include "esp_task_wdt.h"
 
+#include "settings.h"
+
 /** If no new data is sent on 60 seconds, restart */
 #define TWDT_TIMEOUT_S 60
 
@@ -107,7 +109,7 @@ static void ble_on_broadcaster_discovered(mac_addr_t mac,
   time_t now;
   time(&now);
   size_t index = 0;
-  snprintf(topic, sizeof(topic), "%s/%s/%s/RSSI", wifi_mac, ops->name, mactoa(mac));
+  snprintf(topic, sizeof(topic), "%s%s/%s/%s/RSSI", MQTT_TOPIC_PREFIX, wifi_mac, ops->name, mactoa(mac));
   index = snprintf(data, sizeof(data), "%ld:%d", now, rssi);
   int status = 0;
   status |= mqtt_publish(topic, (uint8_t*)data, index, 0, true);  //QoS = 0, retain = true
@@ -116,7 +118,7 @@ static void ble_on_broadcaster_discovered(mac_addr_t mac,
   if(!strcmp(ops->name, "RuuviTag"))
   {
     memset(topic, 0, sizeof(topic));
-    snprintf(topic, sizeof(topic), "%s/%s/%s/RAW", wifi_mac, ops->name, mactoa(mac));
+    snprintf(topic, sizeof(topic), "%s%s/%s/%s/RAW", MQTT_TOPIC_PREFIX, wifi_mac, ops->name, mactoa(mac));
     /** Print raw payload **/
     index = 0;
     index += snprintf(data, sizeof(data), "%ld:", now);
@@ -150,9 +152,10 @@ static void cleanup(void)
 static void wifi_on_connected(void)
 {
   ESP_LOGI(TAG, "Connected to WiFi, connecting to MQTT");
-  mqtt_connect("playground.ruuvi.com", 1883,
-               NULL, NULL,
-               NULL);
+  mqtt_connect(MQTT_SERVER, MQTT_PORT,
+               NULL,
+               MQTT_USER, MQTT_PASSWORD
+               );
   time_sync();
 
   if(NULL != task_gpio_blink_led_task)
