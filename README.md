@@ -145,5 +145,11 @@ in main.c
  * Update must be triggered only after user action requiring physical access to device, i.e. button press. [0.6.0]
 
 ## Licenses
- BSD-3 for the main project, submodules under folder `components` have their own licenses. 
- Main project is based on MIT-Licensed (Ruuvi-GW)[https://gitlab.com/rhr407/ruuvi].
+ * Main project is BSD-3 licesend.
+ * submodules under folder `components` have their own licenses. 
+ 
+## Contributors
+In alphabetical order by Github nick, email and real name as listed in the profile page.
+* [aapris](https://github.com/aapris) Aapo Rista <aapo.gitpub@rista.net>
+* [ojousima](https://github.com/ojousima) Otso Jousimaa <otso@ojousima.net>
+* [rhr407](https://gitlab.com/rhr407) Rizwan Hamid Randhawa
