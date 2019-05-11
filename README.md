@@ -11,7 +11,16 @@ git submodule update --init --recursive
 
 2. Connect the esp32 dev-kit to your PC.  
 
-3. Go into the project folder, open terminal in the folder path and run the following command: 
+3. Go into the project folder, open terminal in the folder path and create `settings.h`
+by copying `settings-example.h`:
+
+```
+cp -i main/settings-example.h main/settings.h
+```
+
+Edit MQTT values in `settings.h`, if you want to use some other MQTT broker.
+
+Then run the following command:
 
 ```	
 make menuconfig
